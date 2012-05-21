@@ -1,0 +1,5 @@
+verkauft([
+ {"type":"rect","x":20,"y":20},
+ {"type":"rect","x":300,"y":40},
+ {"type":"center","segId":22}
+])

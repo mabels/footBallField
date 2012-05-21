@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Foosball Field</title>
+</head>
+<body>
+<div style="postion:relative">
+<div id="field" style="position: absolute; top: 0, left: 0" ></div>
+<div id="action" style="position: absolute; top: 0, left: 0"></div>
+</div>
+<script type="text/javascript" src="raphael-min.js"></script>
+<script type="text/javascript">
+var verkauftArgs = null
+var verkauft = function(data) { verkauftArgs = data }
+Raphael(function() {
+  var htmlField = document.getElementById("field")
+  var lineWidth = 6
+  var frame = 20
+  var length = 900
+  var height = 640
+  var field = Raphael("field", length+frame*2, height+frame*2);
+  field.rect(0,0, length+frame*2, height+frame*2).attr("fill", "#0f0")
+  field.rect(frame,frame, length, height).attr("stroke", "#fff").attr("stroke-width", lineWidth)
+  var radius = 10
+  var corners = [
+                  {x:frame,        y:frame,        rotation: [radius,radius,radius,radius]},
+                  {x:length+frame, y:frame,        rotation: [0,radius,radius,radius]},
+                  {x:frame,        y:height+frame, rotation: [radius,0,radius,radius]},
+                  {x:length+frame, y:height+frame, rotation: [0,0,radius,radius]}
+                ]
+    for (var i in corners) {
+      var corner = corners[i]
+      var ofs = [corner.x-radius+corner.rotation[0], corner.y-radius+corner.rotation[1], radius, radius]
+      field.circle(corner.x, corner.y, radius)
+        .attr("stroke", "#fff")
+        .attr("stroke-width", lineWidth)
+        .attr('clip-rect',ofs.join(","))
+    }
+  var midline = field.path("M"+(frame+length/2)+" "+frame+"L"+(frame+length/2)+" "+(frame+height)).attr("stroke", "#fff").attr("stroke-width", lineWidth)
+  var centerdot = field.circle(frame+length/2,frame+height/2,lineWidth).attr("stroke", "#fff").attr("stroke-width", lineWidth)
+  var center = field.circle(frame+length/2,frame+height/2,91.5).attr("stroke", "#fff").attr("stroke-width", lineWidth)
+
+  field.setStart()
+  var goal =  field.rect(frame/2, frame+(height/2-73.2/2), frame/2, 73.2)
+  var dot11 = field.circle(frame+110,frame+height/2,lineWidth/2)
+  var goalRoom  = field.rect(frame,frame+(height/2-(73.2+110)/2), 55, 73.2+110)
+  var room  = field.rect(frame,frame+(height/2-(73.2+110+220)/2), 55+110, 73.2+110+220)
+  var circle11  = field.circle(frame+110,frame+height/2,91.5).attr("clip-rect", [frame+110+55,frame+height/2-91.5,110,2*110].join(","))
+  var fieldSet = field.setFinish()
+  fieldSet.attr("stroke", "#fff").attr("stroke-width", lineWidth)
+
+  goal.clone().transform("T"+(frame/2+length)+",0")
+  dot11.clone().transform("T"+(length-220)+",0")
+  goalRoom.clone().transform("T"+(length-55)+",0")
+  room.clone().transform("T"+(length-(55+110))+",0")
+  field.circle(frame+length-110,frame+height/2,91.5).attr("clip-rect",[frame,frame,length-(55+110),height].join(",")).attr("stroke", "#fff").attr("stroke-width", lineWidth)
+
+  var field = Raphael("action", length+frame*2, height+frame*2);
+
+  var rects = {}
+  var fieldMouseOver = function() { this.attr("fill", "#00f").attr("fill-opacity", 1) }
+  var fieldMouseOut = function() { this.attr("fill-opacity", 0) }
+  var fieldClick = function() { alert("CLICKED:"+this.attr("x")+":"+this.attr("y")+":"+this.data("segId")) }
+  var fieldSize = 20
+  for(var x = frame; x < (frame+length); x += fieldSize) {
+    for(var y = frame; y < (frame+height); y += fieldSize) {
+      if (frame+length/2-110 <= x && x < frame+length/2-110+220 &&
+          frame+height/2-100 <= y && y < frame+height/2-100+200) { 
+        continue
+      }
+      rects[x] = rects[x] || {} 
+      rects[x][y] = field.rect(x,y, fieldSize,fieldSize).attr("stroke", "#f00").click(fieldClick).hover(fieldMouseOver, fieldMouseOut)
+    }
+  }
+
+  field.rect(frame+length/2-110, frame+height/2-100, 220,200).attr("stroke", "#ff0")
+  var centerSegment = {}
+  var cnt = 0
+ 
+  for(var x = -110; x <= 100; x+=fieldSize) {
+    ++cnt
+    centerSegment[cnt] = field.path("M"+(frame+length/2)+" "+(frame+height/2)+"L"+(frame+length/2+x)+" "+(frame+height/2-100)+"L"+(frame+length/2+(x+fieldSize))+" "+(frame+height/2-100)+"Z").click(fieldClick).hover(fieldMouseOver, fieldMouseOut).attr("stroke", "#0ff").data("segId", cnt)
+    ++cnt
+    centerSegment[cnt] = field.path("M"+(frame+length/2)+" "+(frame+height/2)+"L"+(frame+length/2+x)+" "+(frame+height/2+100)+"L"+(frame+length/2+(x+fieldSize))+" "+(frame+height/2+100)+"Z").click(fieldClick).hover(fieldMouseOver, fieldMouseOut).attr("stroke", "#0ff").data("segId", cnt)
+  }
+  
+  for(var y = -100; y < 100; y+=fieldSize) {
+    ++cnt
+    centerSegment[cnt] = field.path("M"+(frame+length/2)+" "+(frame+height/2)+"L"+(frame+length/2-110)+" "+(frame+height/2+y)+"L"+(frame+length/2-110)+" "+(frame+height/2+(fieldSize+y))+"Z").click(fieldClick).hover(fieldMouseOver, fieldMouseOut).attr("stroke", "#f0f").data("segId", cnt)
+    ++cnt
+    centerSegment[cnt] = field.path("M"+(frame+length/2)+" "+(frame+height/2)+"L"+(frame+length/2+110)+" "+(frame+height/2+y)+"L"+(frame+length/2+110)+" "+(frame+height/2+(fieldSize+y))+"Z").click(fieldClick).hover(fieldMouseOver, fieldMouseOut).attr("stroke", "#f0f").data("segId", cnt)
+  }
+  // ist das schlecht
+  setTimeout(function myWaiter() { 
+    if (verkauftArgs) {
+      for(var i in verkauftArgs) {
+        var node = verkauftArgs[i]
+        if (node.type == "rect") {
+          rects[frame+node.x][frame+node.y].unhover(fieldMouseOver, fieldMouseOut).unclick(fieldClick).attr("fill", "#0ff")
+        }
+        if (node.type == "center") {
+          centerSegment[node.segId].unhover(fieldMouseOver, fieldMouseOut).unclick(fieldClick).attr("fill", "#0ff")
+        }
+      }
+      return;
+    }
+    setTimeout(myWaiter, 500);
+  }, 500)
+
+})
+
+</script>
+<script type="text/javascript" src="verkauft.jsonp"></script>
+</body>
+</html>
